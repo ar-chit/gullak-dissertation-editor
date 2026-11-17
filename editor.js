@@ -1,13 +1,15 @@
 'use strict';
 const baseline=JSON.parse(document.getElementById('published-baseline').textContent);
 const key='gullak-pages-edits-'+baseline.version;
+// A publication is a fresh baseline. Discard saved overlays from older versions.
+try{for(const oldKey of Object.keys(localStorage)){if(oldKey.startsWith('gullak-pages-edits-')&&oldKey!==key)localStorage.removeItem(oldKey);}}catch(error){}
 const fields=[...document.querySelectorAll('[contenteditable][data-line-id]')];
 const ids=new Set(fields.map(e=>e.dataset.lineId));
 const publishedText=Object.fromEntries(fields.map(e=>[e.dataset.lineId,e.innerText]));
 const publishedMarkup=Object.fromEntries(fields.map(e=>[e.dataset.lineId,e.innerHTML]));
 const status=document.getElementById('save-status');
 let state={version:baseline.version,edits:{...baseline.edits},updatedAt:baseline.updatedAt};
-function valid(data){return data&&typeof data==='object'&&data.edits&&typeof data.edits==='object'&&!Array.isArray(data.edits)&&Object.entries(data.edits).every(([k,v])=>ids.has(k)&&typeof v==='string'&&v.length<100000)&&(!data.version||data.version===baseline.version);}
+function valid(data){return data&&typeof data==='object'&&data.version===baseline.version&&data.edits&&typeof data.edits==='object'&&!Array.isArray(data.edits)&&Object.entries(data.edits).every(([k,v])=>ids.has(k)&&typeof v==='string'&&v.length<100000);}
 function apply(){for(const e of fields){const id=e.dataset.lineId;const value=state.edits[id];if(value!==undefined){if(value!==publishedText[id])e.textContent=value;e.classList.add('edited');}else{e.innerHTML=publishedMarkup[id];e.classList.remove('edited');}}}
 function save(){try{localStorage.setItem(key,JSON.stringify(state));status.textContent='Saved in this browser · '+new Date().toLocaleTimeString();status.style.color='#176334';}catch(error){status.textContent='Browser saving is unavailable. Download an edits backup before closing or refreshing.';status.style.color='#9b4a00';}}
 function download(name,data,type){const url=URL.createObjectURL(new Blob([data],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
