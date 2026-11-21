@@ -2,6 +2,9 @@
 'use strict';
 const encrypted=JSON.parse(document.getElementById('encrypted-document').textContent);
 const sessionKey='gullak-unlock-'+encrypted.version;
+// On each browser's next visit, remove every older release's edit overlays.
+try{for(const key of Object.keys(localStorage)){if(key.startsWith('gullak-pages-edits-')&&key!=='gullak-pages-edits-'+encrypted.contentVersion)localStorage.removeItem(key);}}catch(error){}
+try{for(const key of Object.keys(sessionStorage)){if(key.startsWith('gullak-unlock-')&&key!==sessionKey)sessionStorage.removeItem(key);}}catch(error){}
 const bytes=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 const encode=a=>btoa(String.fromCharCode(...a));
 const form=document.getElementById('unlock-form');
